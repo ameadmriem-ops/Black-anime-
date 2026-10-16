@@ -1311,11 +1311,78 @@ class MainActivity : ComponentActivity() {
         startDownloadInternal(req)
     }
 
+    
+    fun getLangStr(key: String, vararg args: Any): String {
+        val lang = try {
+            val prefs = getSharedPreferences("app_settings_prefs", Activity.MODE_PRIVATE)
+            prefs.getString("app_lang", "ar") ?: "ar"
+        } catch (e: Exception) {
+            "ar"
+        }
+        val text = when (lang) {
+            "en" -> when (key) {
+                "storage_perm_title" -> "Storage Permission to Save Episodes"
+                "storage_perm_msg" -> "To save episode \"${args.getOrNull(0) ?: ""}\" in the Downloads folder, the app needs storage permission."
+                "storage_perm_continue" -> "Continue"
+                "cancel" -> "Cancel"
+                "download_cancelled_no_perm" -> "Download cancelled: storage permission not granted"
+                "enable_storage_title" -> "Enable Storage Permission"
+                "enable_storage_msg" -> "Storage permission was previously denied. Please enable it in app settings to download episodes."
+                "app_settings" -> "App Settings"
+                "invalid_url" -> "Episode link is unavailable"
+                "m3u8_not_supported" -> "This episode is a live stream (m3u8) and cannot be downloaded as a video file"
+                "already_downloading" -> "This episode is already downloading (${args.getOrNull(0) ?: ""})"
+                "download_started" -> "Started downloading: ${args.getOrNull(0) ?: ""} in Downloads folder"
+                "download_failed_to_start" -> "Failed to start download: ${args.getOrNull(0) ?: ""}"
+                "download_completed" -> "✅ Download completed: ${args.getOrNull(0) ?: ""}"
+                "download_failed" -> "❌ Failed to download: ${args.getOrNull(0) ?: ""}"
+                else -> key
+            }
+            "fr" -> when (key) {
+                "storage_perm_title" -> "Autorisation de stockage pour enregistrer les épisodes"
+                "storage_perm_msg" -> "Pour enregistrer l'épisode « ${args.getOrNull(0) ?: ""} » dans le dossier Téléchargements, l'application a besoin de l'autorisation de stockage."
+                "storage_perm_continue" -> "Continuer"
+                "cancel" -> "Annuler"
+                "download_cancelled_no_perm" -> "Téléchargement annulé : autorisation de stockage refusée"
+                "enable_storage_title" -> "Activer l'autorisation de stockage"
+                "enable_storage_msg" -> "L'autorisation de stockage a été refusée. Veuillez l'activer dans les paramètres de l'application."
+                "app_settings" -> "Paramètres"
+                "invalid_url" -> "Le lien de l'épisode n'est pas disponible"
+                "m3u8_not_supported" -> "Cet épisode est un flux direct (m3u8) et ne peut pas être téléchargé sous forme de vidéo"
+                "already_downloading" -> "Cet épisode est déjà en cours de téléchargement (${args.getOrNull(0) ?: ""})"
+                "download_started" -> "Téléchargement commencé : ${args.getOrNull(0) ?: ""} dans Téléchargements"
+                "download_failed_to_start" -> "Échec du démarrage du téléchargement : ${args.getOrNull(0) ?: ""}"
+                "download_completed" -> "✅ Téléchargement terminé : ${args.getOrNull(0) ?: ""}"
+                "download_failed" -> "❌ Échec du téléchargement : ${args.getOrNull(0) ?: ""}"
+                else -> key
+            }
+            else -> when (key) {
+                "storage_perm_title" -> "إذن التخزين لحفظ الحلقات"
+                "storage_perm_msg" -> "لحفظ حلقة \"${args.getOrNull(0) ?: ""}\" في مجلد التنزيلات على هاتفك، يحتاج التطبيق إلى إذن الوصول للتخزين."
+                "storage_perm_continue" -> "متابعة"
+                "cancel" -> "إلغاء"
+                "download_cancelled_no_perm" -> "تم إلغاء التنزيل لعدم توفر الإذن"
+                "enable_storage_title" -> "تفعيل إذن التخزين"
+                "enable_storage_msg" -> "تم رفض إذن التخزين سابقاً. يمكنك تفعيل الإذن يدوياً من إعدادات التطبيق لتتمكن من تنزيل الحلقات إلى هاتفك."
+                "app_settings" -> "إعدادات التطبيق"
+                "invalid_url" -> "رابط الحلقة غير متوفر"
+                "m3u8_not_supported" -> "رابط هذه الحلقة هو بث مباشر (m3u8) ولا يمكن تنزيله كملف فيديو"
+                "already_downloading" -> "جاري تنزيل هذه الحلقة بالفعل (${args.getOrNull(0) ?: ""})"
+                "download_started" -> "بدأ تنزيل: ${args.getOrNull(0) ?: ""} في مجلد التنزيلات"
+                "download_failed_to_start" -> "فشل بدء التنزيل: ${args.getOrNull(0) ?: ""}"
+                "download_completed" -> "✅ اكتمل تنزيل: ${args.getOrNull(0) ?: ""}"
+                "download_failed" -> "❌ تعذر اكتمال تنزيل: ${args.getOrNull(0) ?: ""}"
+                else -> key
+            }
+        }
+        return text
+    }
+
     private fun showStoragePermissionRationaleDialog(req: DownloadRequest) {
         AlertDialog.Builder(this)
-            .setTitle("إذن التخزين لحفظ الحلقات")
-            .setMessage("لحفظ حلقة \"${req.episodeTitle}\" في مجلد التنزيلات على هاتفك، يحتاج التطبيق إلى إذن الوصول للتخزين.")
-            .setPositiveButton("متابعة") { dialog, _ ->
+            .setTitle(getLangStr("storage_perm_title"))
+            .setMessage(getLangStr("storage_perm_msg", req.episodeTitle))
+            .setPositiveButton(getLangStr("storage_perm_continue")) { dialog, _ ->
                 dialog.dismiss()
                 ActivityCompat.requestPermissions(
                     this,
@@ -1323,11 +1390,11 @@ class MainActivity : ComponentActivity() {
                     STORAGE_PERMISSION_REQUEST_CODE
                 )
             }
-            .setNegativeButton("إلغاء") { dialog, _ ->
+            .setNegativeButton(getLangStr("cancel")) { dialog, _ ->
                 dialog.dismiss()
                 pendingDownloadRequest = null
-                Toast.makeText(this, "تم إلغاء التنزيل لعدم توفر الإذن", Toast.LENGTH_SHORT).show()
-                notifyDownloadError(req.episodeKey, "PERMISSION_DENIED", "تم رفض إذن التخزين")
+                Toast.makeText(this, getLangStr("download_cancelled_no_perm"), Toast.LENGTH_SHORT).show()
+                notifyDownloadError(req.episodeKey, "PERMISSION_DENIED", getLangStr("download_cancelled_no_perm"))
             }
             .setCancelable(false)
             .show()
@@ -1335,9 +1402,9 @@ class MainActivity : ComponentActivity() {
 
     private fun showPermissionSettingsDialog() {
         AlertDialog.Builder(this)
-            .setTitle("تفعيل إذن التخزين")
-            .setMessage("تم رفض إذن التخزين سابقاً. يمكنك تفعيل الإذن يدوياً من إعدادات التطبيق لتتمكن من تنزيل الحلقات إلى هاتفك.")
-            .setPositiveButton("إعدادات التطبيق") { dialog, _ ->
+            .setTitle(getLangStr("enable_storage_title"))
+            .setMessage(getLangStr("enable_storage_msg"))
+            .setPositiveButton(getLangStr("app_settings")) { dialog, _ ->
                 dialog.dismiss()
                 try {
                     val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -1348,7 +1415,7 @@ class MainActivity : ComponentActivity() {
                     Log.w(TAG, "Could not open app settings", e)
                 }
             }
-            .setNegativeButton("إلغاء") { dialog, _ ->
+            .setNegativeButton(getLangStr("cancel")) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -1358,7 +1425,7 @@ class MainActivity : ComponentActivity() {
         var streamUrl = req.url.trim()
         if (streamUrl.isBlank()) {
             runOnUiThread {
-                Toast.makeText(this, "رابط الحلقة غير متوفر", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getLangStr("invalid_url"), Toast.LENGTH_SHORT).show()
                 notifyDownloadError(req.episodeKey, "INVALID_URL", "رابط الحلقة غير متوفر")
             }
             return
@@ -1374,7 +1441,7 @@ class MainActivity : ComponentActivity() {
 
         if (streamUrl.contains(".m3u8", ignoreCase = true)) {
             runOnUiThread {
-                Toast.makeText(this, "رابط هذه الحلقة هو بث مباشر (m3u8) ولا يمكن تنزيله كملف فيديو", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getLangStr("m3u8_not_supported"), Toast.LENGTH_LONG).show()
                 notifyDownloadError(req.episodeKey, "M3U8_NOT_SUPPORTED", "رابط الحلقة بث مباشر ولا يدعم التنزيل كملف منفصل")
             }
             return
@@ -1386,7 +1453,7 @@ class MainActivity : ComponentActivity() {
             val existingInfo = activeDownloads[existingDownloadId]
             if (existingInfo?.status == DownloadManager.STATUS_RUNNING || existingInfo?.status == DownloadManager.STATUS_PENDING) {
                 runOnUiThread {
-                    Toast.makeText(this, "جاري تنزيل هذه الحلقة بالفعل (${existingInfo.progress}%)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getLangStr("already_downloading", "${existingInfo?.progress ?: 0}%"), Toast.LENGTH_SHORT).show()
                 }
                 return
             }
@@ -1445,7 +1512,7 @@ class MainActivity : ComponentActivity() {
             episodeKeyToDownloadId[req.episodeKey] = downloadId
 
             runOnUiThread {
-                Toast.makeText(this, "بدأ تنزيل: ${req.episodeTitle} في مجلد التنزيلات", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getLangStr("download_started", req.episodeTitle), Toast.LENGTH_SHORT).show()
                 val js = "if(window.onEpisodeDownloadStatusChanged){window.onEpisodeDownloadStatusChanged('${req.episodeKey}', 'STARTED', 0, '$fileName');}"
                 webView.evaluateJavascript(js, null)
             }
@@ -1512,7 +1579,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "✅ اكتمل تنزيل: ${info.episodeTitle}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, getLangStr("download_completed", info.episodeTitle), Toast.LENGTH_LONG).show()
                     val js = "if(window.onEpisodeDownloadStatusChanged){window.onEpisodeDownloadStatusChanged('${info.episodeKey}', 'COMPLETED', 100, '${info.fileName}');}"
                     webView.evaluateJavascript(js, null)
                 }
@@ -1522,7 +1589,7 @@ class MainActivity : ComponentActivity() {
                 episodeKeyToDownloadId.remove(info.episodeKey)
 
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "❌ تعذر اكتمال تنزيل: ${info.episodeTitle}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, getLangStr("download_failed", info.episodeTitle), Toast.LENGTH_LONG).show()
                     val js = "if(window.onEpisodeDownloadStatusChanged){window.onEpisodeDownloadStatusChanged('${info.episodeKey}', 'FAILED', 0, '${info.fileName}');}"
                     webView.evaluateJavascript(js, null)
                 }

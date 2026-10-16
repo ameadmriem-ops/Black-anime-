@@ -4089,18 +4089,18 @@ window.renderActiveFiltersPills = function(filterObj) {
   if (!filterObj) return "";
   let pills = [];
   if (filterObj.version && filterObj.version !== "all") {
-    pills.push(`<span style="background:#1f2937;color:#60a5fa;border:1px solid #3b82f6;padding:2px 8px;border-radius:10px;font-size:11px">النسخة: ${window.escapeDescHtml(filterObj.version)}</span>`);
+    pills.push(`<span style="background:#1f2937;color:#60a5fa;border:1px solid #3b82f6;padding:2px 8px;border-radius:10px;font-size:11px">${t("filter_version_short")}: ${window.escapeDescHtml(window.translateVersion(filterObj.version))}</span>`);
   }
   if (filterObj.category && filterObj.category !== "all") {
-    pills.push(`<span style="background:#1f2937;color:#a78bfa;border:1px solid #8b5cf6;padding:2px 8px;border-radius:10px;font-size:11px">النوع: ${window.escapeDescHtml(filterObj.category)}</span>`);
+    pills.push(`<span style="background:#1f2937;color:#a78bfa;border:1px solid #8b5cf6;padding:2px 8px;border-radius:10px;font-size:11px">${t("filter_type_short")}: ${window.escapeDescHtml(window.translateCategoryLabel(filterObj.category))}</span>`);
   }
   if (filterObj.year && filterObj.year !== "all") {
-    let yLabel = (filterObj.year === "before_2015") ? "قبل 2015" : filterObj.year;
-    pills.push(`<span style="background:#1f2937;color:#34d399;border:1px solid #10b981;padding:2px 8px;border-radius:10px;font-size:11px">السنة: ${window.escapeDescHtml(yLabel)}</span>`);
+    let yLabel = window.translateYear(filterObj.year);
+    pills.push(`<span style="background:#1f2937;color:#34d399;border:1px solid #10b981;padding:2px 8px;border-radius:10px;font-size:11px">${t("filter_year_short")}: ${window.escapeDescHtml(yLabel)}</span>`);
   }
   if (Array.isArray(filterObj.genres)) {
     for (const g of filterObj.genres) {
-      pills.push(`<span style="background:#371b1b;color:#f87171;border:1px solid #ef4444;padding:2px 8px;border-radius:10px;font-size:11px">🏷️ ${window.escapeDescHtml(g)}</span>`);
+      pills.push(`<span style="background:#371b1b;color:#f87171;border:1px solid #ef4444;padding:2px 8px;border-radius:10px;font-size:11px">🏷️ ${window.escapeDescHtml(window.translateGenre(g))}</span>`);
     }
   }
   return pills.join(" ");
@@ -4147,8 +4147,30 @@ window.openFilterModal = function(targetType) {
 
   const titleEl = document.getElementById("filterModalTitle");
   if (titleEl) {
-    titleEl.innerText = isAnimation ? "تصفية الأنيميشن" : "تصفية الأنمي";
+    titleEl.innerText = isAnimation ? t("filter_title_animation") : t("filter_title_anime");
   }
+
+  // Update choice chips labels
+  const filterVersionAll = document.querySelector("#filterVersionChips [data-val='all']");
+  const filterVersionSub = document.querySelector("#filterVersionChips [data-val='مترجم']");
+  const filterVersionDub = document.querySelector("#filterVersionChips [data-val='مدبلج']");
+  if (filterVersionAll) filterVersionAll.innerText = t("filter_all");
+  if (filterVersionSub) filterVersionSub.innerText = t("version_subbed");
+  if (filterVersionDub) filterVersionDub.innerText = t("version_dubbed");
+
+  const filterCatAll = document.querySelector("#filterCategoryChips [data-val='all']");
+  const filterCatSeries = document.querySelector("#filterCategoryChips [data-val='مسلسل']");
+  const filterCatMovie = document.querySelector("#filterCategoryChips [data-val='فلم']");
+  const filterCatSpecial = document.querySelector("#filterCategoryChips [data-val='خاصة']");
+  if (filterCatAll) filterCatAll.innerText = t("filter_all");
+  if (filterCatSeries) filterCatSeries.innerText = t("cat_series");
+  if (filterCatMovie) filterCatMovie.innerText = t("cat_movie");
+  if (filterCatSpecial) filterCatSpecial.innerText = t("cat_special");
+
+  const filterYearAllOpt = document.querySelector("#filterYearSelect option[value='all']");
+  const filterYearBeforeOpt = document.querySelector("#filterYearSelect option[value='before_2015']");
+  if (filterYearAllOpt) filterYearAllOpt.innerText = t("filter_all_years");
+  if (filterYearBeforeOpt) filterYearBeforeOpt.innerText = t("filter_before_2015");
 
   document.querySelectorAll("#filterVersionChips .filter-choice-chip").forEach(btn => {
     let v = btn.getAttribute("data-val");
@@ -4168,11 +4190,23 @@ window.openFilterModal = function(targetType) {
   }
   const yearDisplay = document.getElementById("selectedYearDisplay");
   if (yearDisplay) {
-    yearDisplay.innerText = (window.modalTempFilterState.year === "all") ? "الكل" : (window.modalTempFilterState.year === "before_2015" ? "قبل 2015" : window.modalTempFilterState.year);
+    yearDisplay.innerText = window.translateYear(window.modalTempFilterState.year);
   }
 
   const searchInput = document.getElementById("filterGenreSearchInput");
-  if (searchInput) searchInput.value = "";
+  if (searchInput) {
+    searchInput.value = "";
+    searchInput.placeholder = t("filter_genre_search_placeholder");
+  }
+
+  const clearGenresBtn = document.querySelector("#contentFilterModal button[onclick*='clearFilterModalGenresOnly']");
+  if (clearGenresBtn) clearGenresBtn.innerText = t("filter_clear_selection");
+
+  const applyBtnSpan = document.querySelector("#contentFilterModal button[onclick*='applyContentFilters'] span");
+  if (applyBtnSpan) applyBtnSpan.innerText = t("filter_apply_btn");
+
+  const resetBtnSpan = document.querySelector("#contentFilterModal button[onclick*='resetContentFilters'] span");
+  if (resetBtnSpan) resetBtnSpan.innerText = t("filter_clear_all_btn");
 
   window.renderFilterModalGenresGrid();
 
@@ -4205,7 +4239,7 @@ window.onFilterYearChanged = function(val) {
   window.modalTempFilterState.year = val;
   const yearDisplay = document.getElementById("selectedYearDisplay");
   if (yearDisplay) {
-    yearDisplay.innerText = (val === "all") ? "الكل" : (val === "before_2015" ? "قبل 2015" : val);
+    yearDisplay.innerText = window.translateYear(val);
   }
 };
 
@@ -4227,7 +4261,7 @@ window.clearFilterModalGenresOnly = function() {
 window.updateFilterModalGenresUI = function() {
   const countBadge = document.getElementById("filterSelectedGenresCount");
   if (countBadge) {
-    countBadge.innerText = `${window.modalTempFilterState.genres.length} محدد`;
+    countBadge.innerText = window.formatSelectedGenresCount(window.modalTempFilterState.genres.length);
   }
   document.querySelectorAll("#filterModalGenresGrid .filter-genre-pill").forEach(pill => {
     let g = pill.getAttribute("data-genre");
@@ -4242,22 +4276,25 @@ window.updateFilterModalGenresUI = function() {
 window.renderFilterModalGenresGrid = function(filterQuery = "") {
   const container = document.getElementById("filterModalGenresGrid");
   if (!container) return;
-  const q = window.normalizeSearchText(filterQuery || "");
-  const list = window.ALL_GENRES.filter(g => !q || window.normalizeSearchText(g).includes(q));
-
+  const q = window.normalizeSearchText(filterQuery || "").toLowerCase();
+  const list = window.ALL_GENRES.filter(g => {
+    if (!q) return true;
+    const gNorm = window.normalizeSearchText(g).toLowerCase();
+    const gTrans = window.normalizeSearchText(window.translateGenre(g)).toLowerCase();
+    return gNorm.includes(q) || gTrans.includes(q);
+  });
   if (list.length === 0) {
-    container.innerHTML = '<span style="font-size:12px;color:#777;padding:10px">لا يوجد تصنيف بهذا الاسم</span>';
+    container.innerHTML = `<span style="font-size:12px;color:#777;padding:10px">${t("filter_no_genres_found")}</span>`;
     return;
   }
-
   container.innerHTML = list.map(g => {
     let isSel = window.modalTempFilterState.genres.includes(g);
-    return `<button type="button" class="filter-genre-pill ${isSel ? 'active' : ''}" data-genre="${window.escapeDescHtml(g)}" onclick="window.toggleFilterModalGenre('${window.escapeDescHtml(g)}')">${window.escapeDescHtml(g)}</button>`;
+    let displayGenre = window.translateGenre(g);
+    return `<button type="button" class="filter-genre-pill ${isSel ? 'active' : ''}" data-genre="${window.escapeDescHtml(g)}" onclick="window.toggleFilterModalGenre('${window.escapeDescHtml(g)}')">${window.escapeDescHtml(displayGenre)}</button>`;
   }).join("");
-
   const countBadge = document.getElementById("filterSelectedGenresCount");
   if (countBadge) {
-    countBadge.innerText = `${window.modalTempFilterState.genres.length} محدد`;
+    countBadge.innerText = window.formatSelectedGenresCount(window.modalTempFilterState.genres.length);
   }
 };
 
@@ -4284,7 +4321,6 @@ window.applyContentFilters = function() {
       genres: [...window.modalTempFilterState.genres]
     };
   }
-
   window.closeFilterModal();
   if (currentPage !== target) {
     showPage(target);
@@ -4340,24 +4376,152 @@ const I18N = {
     dir: "rtl",
     nav_home: "الرئيسية",
     nav_animation: "الأنميشن",
+    nav_animation_list: "قائمة الأنميشن",
     nav_anime: "الأنمي",
+    nav_anime_list: "قائمة الأنمي",
     nav_add: "إضافة",
-    nav_favorites: "مفضلتي",
+    nav_favorites: "المفضلة",
+    favorites_header: "مفضلتي ♥",
+    nav_history: "آخر المشاهدات",
+    nav_coming: "قادم قريبًا",
+    nav_reports: "البلاغات",
+    nav_account: "الحساب",
     search_title: "بحث",
+    filter_title: "تصفية المحتوى",
+    filter_btn: "تصفية",
+    drawer_title: "القائمة الجانبية",
     settings_title: "الإعدادات",
     back_btn: "← رجوع",
-    search_placeholder: "ابحث...",
-    favorites_header: "مفضلتي ♥",
+    back_label: "رجوع",
+    back_to_previous_list: "← الرجوع للقائمة السابقة",
+    close_btn: "إغلاق",
+    cancel_btn: "إلغاء",
+    apply_btn: "تطبيق",
+    save_btn: "حفظ",
+    delete_btn: "حذف",
+    edit_btn: "تعديل",
+    cat_all: "الكل",
     cat_animation: "الأنميشن",
     cat_anime: "الأنمي",
     cat_series: "مسلسل",
-    cat_movie: "فلم",
-    no_episodes: "لا توجد حلقات مضافة بعد",
-    live_stream: "البث المباشر",
-    no_link_alert: "لم تتم إضافة رابط لهذا العمل بعد",
-    add_ep_btn: "➕ إضافة حلقة / بث",
-    sort_asc_title: "الترتيب الحالي: تصاعدي (اضغط للتبديل إلى تنازلي)",
-    sort_desc_title: "الترتيب الحالي: تنازلي (اضغط للتبديل إلى تصاعدي)",
+    cat_movie: "فيلم",
+    cat_special: "خاصة",
+    cat_ova: "أوفا",
+    cat_ona: "أونا",
+    version_all: "الكل",
+    version_subbed: "مترجم",
+    version_dubbed: "مدبلج",
+    filter_title_anime: "تصفية الأنمي",
+    filter_title_animation: "تصفية الأنيميشن",
+    filter_version_label: "🎙️ النسخة:",
+    filter_version_short: "النسخة",
+    filter_type_label: "📺 نوع العمل:",
+    filter_type_short: "النوع",
+    filter_year_label: "📅 سنة الإنتاج:",
+    filter_year_short: "السنة",
+    filter_all_years: "جميع السنوات",
+    filter_before_2015: "قبل 2015",
+    filter_genres_label: "🏷️ التصنيفات:",
+    filter_clear_selection: "إلغاء التحديد",
+    filter_genre_search_placeholder: "🔍 ابحث عن تصنيف سريعاً (مثال: رياضي، أكشن، كوميدي...)",
+    filter_no_genres_found: "لا يوجد تصنيف بهذا الاسم",
+    filter_apply_btn: "✓ تطبيق",
+    filter_clear_all_btn: "مسح الفلاتر",
+    clear_filters_btn: "مسح الفلاتر",
+    active_filters_title: "الفلاتر النشطة",
+    titles_count: "عمل",
+    no_matching_content: "لا توجد أعمال تطابق الفلاتر المحددة",
+    try_relaxing_filters: "جرب تخفيف شروط التصفية أو إزالة بعض التصنيفات",
+    clear_filters_and_show_all: "إزالة الفلاتر وعرض الكل",
+    loading_content: "جاري تحميل المحتوى...",
+    loading_poster: "جاري تحميل البوستر...",
+    hero_watch_details: "▶ تفاصيل ومشاهدة",
+    home_new_episodes: "حلقات جديدة",
+    home_latest_added: "آخر الأعمال المضافة",
+    home_most_watched: "الأكثر مشاهدة",
+    home_explore_all: "استكشف كافة الأعمال",
+    view_all_arrow: "عرض الكل ←",
+    show_more_arrow: "عرض المزيد ←",
+    add_to_favorites: "إضافة إلى المفضلة",
+    remove_from_favorites: "إزالة من المفضلة",
+    add_to_mylist: "إضافة إلى قائمتي",
+    remove_from_mylist: "إزالة من قائمتي",
+    report_problem_btn: "الإبلاغ عن مشكلة",
+    status_completed: "مكتمل",
+    status_ongoing: "مستمر",
+    status_upcoming: "لم يصدر بعد",
+    rating_audience_title: "تقييم المتابعين",
+    rating_rate_now: "⭐ قيّم الآن",
+    rating_your_score: "✏️ تقييمك:",
+    rating_be_first: "كن أول من يقيّم هذا العمل!",
+    rating_based_on: "بناءً على",
+    ratings_suffix: "تقييماً",
+    watch_btn: "المشاهدة",
+    edit_poster_btn: "🖼️ تعديل البوستر",
+    edit_content_btn: "✏️ تعديل العمل",
+    add_episode_btn: "➕ إضافة حلقة",
+    details_story_title: "📖 قصة العمل",
+    details_genres_subtitle: "🏷️ التصنيفات",
+    spec_type: "النوع:",
+    spec_release_year: "سنة الإصدار:",
+    spec_status: "الحالة:",
+    spec_episodes_count: "عدد الحلقات:",
+    trailer_title: "العرض الدعائي",
+    play_trailer_tooltip: "تشغيل العرض الدعائي",
+    episodes_search_title: "بحث في الحلقات",
+    episodes_toggle_view: "تغيير طريقة العرض",
+    episodes_sort_order: "ترتيب الحلقات",
+    more_options: "المزيد من الخيارات",
+    mark_all_watched: "✓ تحديد الكل كمشاهد",
+    unmark_all_watched: "✕ إلغاء تحديد الكل",
+    sort_asc_label: "ترتيب تصاعدي (1 ➔ الأخير)",
+    sort_desc_label: "ترتيب تنازلي (الأخير ➔ 1)",
+    add_new_episode: "إضافة حلقة جديدة",
+    episodes_search_placeholder: "ابحث برقم الحلقة أو اسمها (مثال: 1 أو الحلقة 2)...",
+    no_episodes_yet: "لا توجد حلقات مضافة بعد",
+    episodes_coming_soon_desc: "سيتم إضافة حلقات هذا العمل قريباً عند توفرها.",
+    add_first_episode_now: "➕ إضافة أول حلقة الآن",
+    no_matching_episodes: "🔍 لا توجد حلقة مطابقة لبحثك",
+    watched_click_to_unmark: "تمت المشاهدة (اضغط للإلغاء)",
+    unwatched_click_to_mark: "لم تتم المشاهدة (اضغط للتعليم)",
+    download_episode: "تحميل الحلقة",
+    downloading_progress: "جاري التحميل",
+    downloaded_click_play: "تم التنزيل (اضغط للتشغيل)",
+    edit_link: "تعديل الرابط",
+    delete_episode: "حذف الحلقة",
+    search_input_placeholder: "ابحث باسم العمل أو أي اسم بديل (عربي، إنجليزي...)",
+    search_no_results: "لا توجد نتائج مطابقة للبحث",
+    user_guest: "زائر",
+    user_click_login: "اضغط لتسجيل الدخول",
+    role_viewer: "مشاهد",
+    role_viewer_unregistered: "مشاهد (غير مسجل)",
+    role_admin: "👑 مدير النظام",
+    role_assistant: "🛡️ مساعد",
+    account_guest_title: "أنت تتصفح كزائر",
+    account_guest_desc: "سجل الدخول الآن للوصول إلى قائمتك الخاصة، مزامنة مفضلتك عبر أجهزتك، وحفظ سجل مشاهداتك.",
+    account_login_register_btn: "تسجيل الدخول / إنشاء حساب",
+    edit_display_name: "تعديل الاسم المستعار",
+    edit_photo_url: "تعديل الصورة الشخصية",
+    reset_password: "إعادة تعيين كلمة المرور",
+    logout_btn: "تسجيل الخروج",
+    logout_sub: "الخروج من الحساب الحالي",
+    login_btn: "تسجيل الدخول",
+    joined_on: "انضم في:",
+    history_stat: "المشاهدات",
+    coming_soon_sub: "جميع أعمال الأنمي والأنميشن التي لم تصدر بعد",
+    coming_soon_counter: "عمل قادم",
+    coming_soon_empty_title: "لا توجد أعمال قادمة حاليًا",
+    coming_soon_empty_desc: "ستظهر هنا أعمال الأنمي والأنميشن التي لم تصدر بعد.",
+    history_title: "آخر المشاهدات",
+    history_empty_title: "لم تشاهد أي حلقات بعد",
+    history_empty_desc: "الحلقات والأفلام التي تشاهدها ستظهر هنا لاستئناف المتابعة بسهولة.",
+    mylist_title: "قائمتي الخاصة",
+    mylist_empty_title: "قائمتك فارغة حالياً",
+    mylist_empty_desc: "يمكنك إضافة الأعمال إلى قائمتك بالنقر على زر حفظ في صفحة التفاصيل.",
+    explore_anime_btn: "استكشف الأنمي",
+    rating_modal_title: "تقييم العمل",
+    rating_modal_sub: "اختر درجة تقييمك من 1 إلى 10",
+    rating_submit_btn: "حفظ التقييم",
     theme_label: "المظهر",
     theme_sub_dark: "الوضع الداكن مفعل",
     theme_sub_light: "الوضع الفاتح مفعل",
@@ -4385,114 +4549,370 @@ const I18N = {
     about_version: "رقم الإصدار",
     about_idea: "فكرة التطبيق",
     auth_title: "أدخل كود الدخول للمتابعة",
-    auth_subtitle: "يرجى إدخال رمز المرور الخاص بك للمتابعة إلى التطبيق",
+    auth_subtitle: "يرجى إدخال الكود المخصص للوصول إلى التطبيق",
     auth_placeholder: "أدخل الكود هنا",
-    auth_error: "الكود غير صحيح",
+    auth_error: "كود الدخول غير صحيح",
     auth_submit: "متابعة",
     ad_support_title: "ادعمنا بمشاهدة 5 إعلانات",
-    ad_support_desc: "دعمكم بمشاهدة 5 إعلانات يومياً يساعدنا في استمرار تقديم جميع القنوات والبثوث المباشرة مجاناً بجودة عالية.",
-    ad_start_btn: "ابدأ المشاهدة"
+    ad_support_desc: "دعمكم اليومي بمشاهدة الإعلانات يساعدنا في استمرار تقديم جميع الحلقات مجاناً وبجودة عالية.",
+    ad_start_btn: "بدء المشاهدة"
   },
   en: {
     dir: "ltr",
     nav_home: "Home",
     nav_animation: "Animation",
+    nav_animation_list: "Animation List",
     nav_anime: "Anime",
+    nav_anime_list: "Anime List",
     nav_add: "Add",
     nav_favorites: "Favorites",
+    favorites_header: "My Favorites ♥",
+    nav_history: "History",
+    nav_coming: "Coming Soon",
+    nav_reports: "Reports",
+    nav_account: "Account",
     search_title: "Search",
+    filter_title: "Filter Content",
+    filter_btn: "Filter",
+    drawer_title: "Side Menu",
     settings_title: "Settings",
     back_btn: "← Back",
-    search_placeholder: "Search...",
-    favorites_header: "My Favorites ♥",
+    back_label: "Back",
+    back_to_previous_list: "← Back to Previous List",
+    close_btn: "Close",
+    cancel_btn: "Cancel",
+    apply_btn: "Apply",
+    save_btn: "Save",
+    delete_btn: "Delete",
+    edit_btn: "Edit",
+    cat_all: "All",
     cat_animation: "Animation",
     cat_anime: "Anime",
     cat_series: "Series",
     cat_movie: "Movie",
-    no_episodes: "No episodes added yet",
-    live_stream: "Live Stream",
-    no_link_alert: "No stream link has been added for this title yet",
-    add_ep_btn: "➕ Add Episode / Stream",
-    sort_asc_title: "Current order: Ascending (Click to switch to Descending)",
-    sort_desc_title: "Current order: Descending (Click to switch to Ascending)",
+    cat_special: "Special",
+    cat_ova: "OVA",
+    cat_ona: "ONA",
+    version_all: "All",
+    version_subbed: "Subtitled",
+    version_dubbed: "Dubbed",
+    filter_title_anime: "Filter Anime",
+    filter_title_animation: "Filter Animation",
+    filter_version_label: "🎙️ Version:",
+    filter_version_short: "Version",
+    filter_type_label: "📺 Type:",
+    filter_type_short: "Type",
+    filter_year_label: "📅 Production Year:",
+    filter_year_short: "Year",
+    filter_all_years: "All Years",
+    filter_before_2015: "Before 2015",
+    filter_genres_label: "🏷️ Genres:",
+    filter_clear_selection: "Clear Selection",
+    filter_genre_search_placeholder: "🔍 Search genre (e.g. Action, Comedy, Sports...)",
+    filter_no_genres_found: "No matching genre found",
+    filter_apply_btn: "✓ Apply",
+    filter_clear_all_btn: "Clear Filters",
+    clear_filters_btn: "Clear Filters",
+    active_filters_title: "Active Filters",
+    titles_count: "titles",
+    no_matching_content: "No titles match the selected filters",
+    try_relaxing_filters: "Try relaxing filter conditions or removing some genres",
+    clear_filters_and_show_all: "Clear Filters & Show All",
+    loading_content: "Loading content...",
+    loading_poster: "Loading poster...",
+    hero_watch_details: "▶ Details & Watch",
+    home_new_episodes: "New Episodes",
+    home_latest_added: "Recently Added",
+    home_most_watched: "Most Watched",
+    home_explore_all: "Explore All Titles",
+    view_all_arrow: "View All →",
+    show_more_arrow: "Show More →",
+    add_to_favorites: "Add to Favorites",
+    remove_from_favorites: "Remove from Favorites",
+    add_to_mylist: "Add to My List",
+    remove_from_mylist: "Remove from My List",
+    report_problem_btn: "Report a Problem",
+    status_completed: "Completed",
+    status_ongoing: "Ongoing",
+    status_upcoming: "Upcoming",
+    rating_audience_title: "Audience Rating",
+    rating_rate_now: "⭐ Rate Now",
+    rating_your_score: "✏️ Your score:",
+    rating_be_first: "Be the first to rate this title!",
+    rating_based_on: "Based on",
+    ratings_suffix: "ratings",
+    watch_btn: "Watch Now",
+    edit_poster_btn: "🖼️ Edit Poster",
+    edit_content_btn: "✏️ Edit Content",
+    add_episode_btn: "➕ Add Episode",
+    details_story_title: "📖 Synopsis",
+    details_genres_subtitle: "🏷️ Genres",
+    spec_type: "Type:",
+    spec_release_year: "Release Year:",
+    spec_status: "Status:",
+    spec_episodes_count: "Episodes:",
+    trailer_title: "Official Trailer",
+    play_trailer_tooltip: "Play Trailer",
+    episodes_search_title: "Search episodes",
+    episodes_toggle_view: "Toggle view",
+    episodes_sort_order: "Sort episodes",
+    more_options: "More options",
+    mark_all_watched: "✓ Mark all as watched",
+    unmark_all_watched: "✕ Unmark all",
+    sort_asc_label: "Sort Ascending (1 ➔ Last)",
+    sort_desc_label: "Sort Descending (Last ➔ 1)",
+    add_new_episode: "Add new episode",
+    episodes_search_placeholder: "Search by episode number or name...",
+    no_episodes_yet: "No episodes added yet",
+    episodes_coming_soon_desc: "Episodes will be added soon once available.",
+    add_first_episode_now: "➕ Add first episode now",
+    no_matching_episodes: "🔍 No matching episodes found",
+    watched_click_to_unmark: "Watched (click to unmark)",
+    unwatched_click_to_mark: "Not watched (click to mark)",
+    download_episode: "Download episode",
+    downloading_progress: "Downloading",
+    downloaded_click_play: "Downloaded (click to play)",
+    edit_link: "Edit link",
+    delete_episode: "Delete episode",
+    search_input_placeholder: "Search by title or alternative names...",
+    search_no_results: "No matching results found",
+    user_guest: "Guest",
+    user_click_login: "Click to log in",
+    role_viewer: "Viewer",
+    role_viewer_unregistered: "Viewer (Guest)",
+    role_admin: "👑 System Admin",
+    role_assistant: "🛡️ Assistant",
+    account_guest_title: "You are browsing as a guest",
+    account_guest_desc: "Log in now to access your custom list, sync favorites across devices, and keep your watch history.",
+    account_login_register_btn: "Log In / Register",
+    edit_display_name: "Edit Display Name",
+    edit_photo_url: "Edit Profile Picture",
+    reset_password: "Reset Password",
+    logout_btn: "Log Out",
+    logout_sub: "Sign out of current account",
+    login_btn: "Log In",
+    joined_on: "Joined on:",
+    history_stat: "Watched",
+    coming_soon_sub: "All upcoming anime and animation titles",
+    coming_soon_counter: "upcoming titles",
+    coming_soon_empty_title: "No upcoming titles right now",
+    coming_soon_empty_desc: "Upcoming anime and animation will appear here once scheduled.",
+    history_title: "Watch History",
+    history_empty_title: "No watched episodes yet",
+    history_empty_desc: "Episodes and movies you watch will appear here to resume anytime.",
+    mylist_title: "My Custom List",
+    mylist_empty_title: "Your list is currently empty",
+    mylist_empty_desc: "You can add titles to your list from their details page.",
+    explore_anime_btn: "Explore Anime",
+    rating_modal_title: "Rate Title",
+    rating_modal_sub: "Choose your score from 1 to 10",
+    rating_submit_btn: "Submit Rating",
     theme_label: "Appearance",
-    theme_sub_dark: "Dark Mode is active",
-    theme_sub_light: "Light Mode is active",
-    theme_dark: "Dark",
-    theme_light: "Light",
+    theme_sub_dark: "Dark mode enabled",
+    theme_sub_light: "Light mode enabled",
+    theme_dark: "Dark Mode",
+    theme_light: "Light Mode",
     lang_label: "Language",
     lang_sub: "Choose application interface language",
     official_website: "Official Website",
-    official_website_sub: "Visit the official website",
-    invalid_website_alert: "No valid official website URL has been configured.",
+    official_website_sub: "Visit the application's official website",
+    invalid_website_alert: "No valid website link has been configured yet.",
     share_app: "Share App",
-    share_app_sub: "Share the real application APK file with friends",
-    share_chooser_title: "Share BLACK ANIME",
-    share_unavailable_alert: "The installation APK file is currently unavailable for sharing.",
+    share_app_sub: "Share application APK installer with friends",
+    share_chooser_title: "Share BLACK ANIME App",
+    share_unavailable_alert: "The APK installation file is currently unavailable for sharing.",
     app_info: "App Info",
-    app_info_sub: "Learn about the app, developer, and version",
+    app_info_sub: "Learn about the app, developer and version",
     notifications_label: "Notifications",
-    notifications_sub_on: "Enabled - You will receive episode and update alerts",
-    notifications_sub_off: "Disabled - App notifications are turned off",
-    notifications_sys_blocked: "Notice: Notifications are blocked in Android system settings. Please allow them in system settings.",
-    notifications_note: "Note: Some notification channels and system permissions can only be controlled from Android system settings.",
-    open_sys_notif_btn: "⚙️ System Notification Settings",
-    about_app_name: "App Name",
+    notifications_sub_on: "Enabled - Receive episode and update notifications",
+    notifications_sub_off: "Disabled - You won't receive app notifications",
+    notifications_sys_blocked: "Notice: Notifications are disabled in Android system settings. Enable them in settings to receive updates.",
+    notifications_note: "Note: Some notification settings and system permissions can only be managed from Android system settings.",
+    open_sys_notif_btn: "⚙️ Android System Settings",
+    about_app_name: "Application Name",
     about_dev_name: "Developer",
     about_version: "Version",
-    about_idea: "About the App",
-    auth_title: "Enter Access Code to Continue",
-    auth_subtitle: "Please enter your passcode to access the application",
+    about_idea: "Concept",
+    auth_title: "Enter Access Code",
+    auth_subtitle: "Please enter your access code to proceed",
     auth_placeholder: "Enter code here",
-    auth_error: "Invalid access code",
+    auth_error: "Incorrect access code",
     auth_submit: "Continue",
     ad_support_title: "Support Us by Watching 5 Ads",
-    ad_support_desc: "Watching 5 daily ads helps us keep all streams and episodes free in high quality.",
+    ad_support_desc: "Your daily ad support keeps all episodes free and streaming in high quality.",
     ad_start_btn: "Start Watching"
   },
   fr: {
     dir: "ltr",
     nav_home: "Accueil",
     nav_animation: "Animation",
+    nav_animation_list: "Liste des animations",
     nav_anime: "Anime",
+    nav_anime_list: "Liste des animés",
     nav_add: "Ajouter",
     nav_favorites: "Favoris",
-    search_title: "Rechercher",
+    favorites_header: "Mes favoris ♥",
+    nav_history: "Historique",
+    nav_coming: "À venir",
+    nav_reports: "Signalements",
+    nav_account: "Compte",
+    search_title: "Recherche",
+    filter_title: "Filtrer le contenu",
+    filter_btn: "Filtrer",
+    drawer_title: "Menu latéral",
     settings_title: "Paramètres",
     back_btn: "← Retour",
-    search_placeholder: "Rechercher...",
-    favorites_header: "Mes Favoris ♥",
+    back_label: "Retour",
+    back_to_previous_list: "← Retour à la liste précédente",
+    close_btn: "Fermer",
+    cancel_btn: "Annuler",
+    apply_btn: "Appliquer",
+    save_btn: "Enregistrer",
+    delete_btn: "Supprimer",
+    edit_btn: "Modifier",
+    cat_all: "Tout",
     cat_animation: "Animation",
     cat_anime: "Anime",
     cat_series: "Série",
     cat_movie: "Film",
-    no_episodes: "Aucun épisode ajouté pour le moment",
-    live_stream: "Diffusion en direct",
-    no_link_alert: "Aucun lien n'a encore été ajouté pour ce contenu",
-    add_ep_btn: "➕ Ajouter un épisode / flux",
-    sort_asc_title: "Ordre actuel : Croissant (Cliquer pour Décroissant)",
-    sort_desc_title: "Ordre actuel : Décroissant (Cliquer pour Croissant)",
+    cat_special: "Spécial",
+    cat_ova: "OVA",
+    cat_ona: "ONA",
+    version_all: "Tout",
+    version_subbed: "Sous-titré",
+    version_dubbed: "Doublé",
+    filter_title_anime: "Filtrer les animés",
+    filter_title_animation: "Filtrer les animations",
+    filter_version_label: "🎙️ Version :",
+    filter_version_short: "Version",
+    filter_type_label: "📺 Type :",
+    filter_type_short: "Type",
+    filter_year_label: "📅 Année de production :",
+    filter_year_short: "Année",
+    filter_all_years: "Toutes les années",
+    filter_before_2015: "Avant 2015",
+    filter_genres_label: "🏷️ Genres :",
+    filter_clear_selection: "Désélectionner",
+    filter_genre_search_placeholder: "🔍 Rechercher un genre (ex. Action, Comédie, Sport...)",
+    filter_no_genres_found: "Aucun genre correspondant",
+    filter_apply_btn: "✓ Appliquer",
+    filter_clear_all_btn: "Effacer les filtres",
+    clear_filters_btn: "Effacer les filtres",
+    active_filters_title: "Filtres actifs",
+    titles_count: "œuvres",
+    no_matching_content: "Aucune œuvre ne correspond aux filtres sélectionnés",
+    try_relaxing_filters: "Essayez d'assouplir vos critères ou de retirer certains genres",
+    clear_filters_and_show_all: "Effacer les filtres et tout afficher",
+    loading_content: "Chargement du contenu...",
+    loading_poster: "Chargement de l'affiche...",
+    hero_watch_details: "▶ Détails et lecture",
+    home_new_episodes: "Nouveaux épisodes",
+    home_latest_added: "Derniers ajouts",
+    home_most_watched: "Les plus regardés",
+    home_explore_all: "Explorer toutes les œuvres",
+    view_all_arrow: "Voir tout →",
+    show_more_arrow: "Voir plus →",
+    add_to_favorites: "Ajouter aux favoris",
+    remove_from_favorites: "Retirer des favoris",
+    add_to_mylist: "Ajouter à ma liste",
+    remove_from_mylist: "Retirer de ma liste",
+    report_problem_btn: "Signaler un problème",
+    status_completed: "Terminé",
+    status_ongoing: "En cours",
+    status_upcoming: "À venir",
+    rating_audience_title: "Note des spectateurs",
+    rating_rate_now: "⭐ Noter maintenant",
+    rating_your_score: "✏️ Votre note :",
+    rating_be_first: "Soyez le premier à noter cette œuvre !",
+    rating_based_on: "Basé sur",
+    ratings_suffix: "évaluations",
+    watch_btn: "Regarder",
+    edit_poster_btn: "🖼️ Modifier l'affiche",
+    edit_content_btn: "✏️ Modifier l'œuvre",
+    add_episode_btn: "➕ Ajouter un épisode",
+    details_story_title: "📖 Synopsis",
+    details_genres_subtitle: "🏷️ Genres",
+    spec_type: "Type :",
+    spec_release_year: "Année de sortie :",
+    spec_status: "Statut :",
+    spec_episodes_count: "Nombre d'épisodes :",
+    trailer_title: "Bande-annonce",
+    play_trailer_tooltip: "Lire la bande-annonce",
+    episodes_search_title: "Rechercher des épisodes",
+    episodes_toggle_view: "Changer l'affichage",
+    episodes_sort_order: "Trier les épisodes",
+    more_options: "Plus d'options",
+    mark_all_watched: "✓ Tout marquer comme vu",
+    unmark_all_watched: "✕ Tout démarquer",
+    sort_asc_label: "Ordre croissant (1 ➔ Dernier)",
+    sort_desc_label: "Ordre décroissant (Dernier ➔ 1)",
+    add_new_episode: "Ajouter un nouvel épisode",
+    episodes_search_placeholder: "Rechercher par numéro ou titre d'épisode...",
+    no_episodes_yet: "Aucun épisode ajouté pour le moment",
+    episodes_coming_soon_desc: "Les épisodes seront bientôt ajoutés dès qu'ils seront disponibles.",
+    add_first_episode_now: "➕ Ajouter le premier épisode",
+    no_matching_episodes: "🔍 Aucun épisode correspondant à votre recherche",
+    watched_click_to_unmark: "Vu (cliquez pour décocher)",
+    unwatched_click_to_mark: "Non vu (cliquez pour marquer)",
+    download_episode: "Télécharger l'épisode",
+    downloading_progress: "Téléchargement",
+    downloaded_click_play: "Téléchargé (cliquer pour lire)",
+    edit_link: "Modifier le lien",
+    delete_episode: "Supprimer l'épisode",
+    search_input_placeholder: "Rechercher par titre ou nom alternatif...",
+    search_no_results: "Aucun résultat trouvé pour votre recherche",
+    user_guest: "Invité",
+    user_click_login: "Cliquez pour vous connecter",
+    role_viewer: "Spectateur",
+    role_viewer_unregistered: "Spectateur (Invité)",
+    role_admin: "👑 Administrateur",
+    role_assistant: "🛡️ Assistant",
+    account_guest_title: "Vous naviguez en tant qu'invité",
+    account_guest_desc: "Connectez-vous pour accéder à votre liste, synchroniser vos favoris et conserver votre historique de lecture.",
+    account_login_register_btn: "Connexion / Inscription",
+    edit_display_name: "Modifier le pseudo",
+    edit_photo_url: "Modifier la photo de profil",
+    reset_password: "Réinitialiser le mot de passe",
+    logout_btn: "Déconnexion",
+    logout_sub: "Se déconnecter du compte actuel",
+    login_btn: "Connexion",
+    joined_on: "Inscrit le :",
+    history_stat: "Visionnés",
+    coming_soon_sub: "Tous les animés et animations à venir",
+    coming_soon_counter: "œuvres à venir",
+    coming_soon_empty_title: "Aucune œuvre à venir pour le moment",
+    coming_soon_empty_desc: "Les animés et animations à venir apparaîtront ici dès leur programmation.",
+    history_title: "Historique",
+    history_empty_title: "Aucun épisode visionné pour l'instant",
+    history_empty_desc: "Les épisodes et films visionnés apparaîtront ici pour reprendre à tout moment.",
+    mylist_title: "Ma liste personnalisée",
+    mylist_empty_title: "Votre liste est actuellement vide",
+    mylist_empty_desc: "Vous pouvez ajouter des œuvres à votre liste depuis leur page de détails.",
+    explore_anime_btn: "Explorer les animés",
+    rating_modal_title: "Noter l'œuvre",
+    rating_modal_sub: "Choisissez votre note de 1 à 10",
+    rating_submit_btn: "Enregistrer la note",
     theme_label: "Apparence",
     theme_sub_dark: "Mode sombre activé",
     theme_sub_light: "Mode clair activé",
-    theme_dark: "Sombre",
-    theme_light: "Clair",
+    theme_dark: "Mode sombre",
+    theme_light: "Mode clair",
     lang_label: "Langue",
     lang_sub: "Choisir la langue de l'interface",
-    official_website: "Site Officiel",
+    official_website: "Site officiel",
     official_website_sub: "Visiter le site officiel de l'application",
-    invalid_website_alert: "Aucun lien de site officiel valide n'est configuré.",
+    invalid_website_alert: "Aucun lien de site officiel valide n'est configuré pour le moment.",
     share_app: "Partager l'application",
-    share_app_sub: "Partager le fichier APK de l'application",
-    share_chooser_title: "Partager BLACK ANIME",
-    share_unavailable_alert: "Le fichier d'installation APK n'est pas disponible pour le partage.",
+    share_app_sub: "Partager le fichier APK d'installation avec vos amis",
+    share_chooser_title: "Partager l'application BLACK ANIME",
+    share_unavailable_alert: "Le fichier d'installation (APK) n'est pas disponible actuellement.",
     app_info: "Infos sur l'application",
-    app_info_sub: "Détails sur l'application, le développeur et la version",
+    app_info_sub: "Découvrez l'application, le développeur et la version",
     notifications_label: "Notifications",
-    notifications_sub_on: "Activées - Vous recevrez les alertes de nouveaux épisodes",
-    notifications_sub_off: "Désactivées - Les notifications sont coupées",
-    notifications_sys_blocked: "Attention : Les notifications sont bloquées dans les paramètres Android. Veuillez les activer dans le système.",
-    notifications_note: "Remarque : Certaines autorisations de notification ne peuvent être gérées que depuis les paramètres système Android.",
+    notifications_sub_on: "Activées - Recevez les alertes d'épisodes et mises à jour",
+    notifications_sub_off: "Désactivées - Vous ne recevrez pas de notifications",
+    notifications_sys_blocked: "Attention : Les notifications sont désactivées dans les paramètres système Android. Activez-les pour les recevoir.",
+    notifications_note: "Remarque : Certaines autorisations ne peuvent être gérées que depuis les paramètres système Android.",
     open_sys_notif_btn: "⚙️ Paramètres système Android",
     about_app_name: "Nom de l'application",
     about_dev_name: "Développeur",
@@ -4509,23 +4929,167 @@ const I18N = {
   }
 };
 
-window.t = function(key) {
+window.t = function(key, fallback) {
   const lang = window.currentLang || "ar";
   const dict = I18N[lang] || I18N.ar;
-  return dict[key] || I18N.ar[key] || key;
+  return dict[key] || I18N.ar[key] || fallback || key;
+};
+
+// Genre translations dictionary
+window.GENRE_TRANSLATIONS = {
+  "أكشن": { en: "Action", fr: "Action" },
+  "مغامرات": { en: "Adventure", fr: "Aventure" },
+  "دراما": { en: "Drama", fr: "Drame" },
+  "كوميدي": { en: "Comedy", fr: "Comédie" },
+  "خيال": { en: "Fantasy", fr: "Fantaisie" },
+  "رعب": { en: "Horror", fr: "Horreur" },
+  "غموض": { en: "Mystery", fr: "Mystère" },
+  "رومانسي": { en: "Romance", fr: "Romance" },
+  "خيال علمي": { en: "Sci-Fi", fr: "Science-fiction" },
+  "رياضي": { en: "Sports", fr: "Sport" },
+  "شريحة من الحياة": { en: "Slice of Life", fr: "Tranche de vie" },
+  "خارق للطبيعة": { en: "Supernatural", fr: "Surnaturel" },
+  "تشويق": { en: "Thriller", fr: "Suspense" },
+  "إيتشي": { en: "Ecchi", fr: "Ecchi" },
+  "تاريخي": { en: "Historical", fr: "Historique" },
+  "موسيقي": { en: "Music", fr: "Musique" },
+  "عسكري": { en: "Military", fr: "Militaire" },
+  "طعام": { en: "Food", fr: "Cuisine" },
+  "رياضات قتالية": { en: "Martial Arts", fr: "Arts martiaux" },
+  "بنات كيوت": { en: "Cute Girls", fr: "Filles mignonnes" },
+  "محاكاة ساخرة": { en: "Parody", fr: "Parodie" },
+  "بوليسي": { en: "Police", fr: "Policier" },
+  "نفسي": { en: "Psychological", fr: "Psychologique" },
+  "إثارة شعب": { en: "Thriller", fr: "Thriller" },
+  "راحة نفسية": { en: "Iyashikei", fr: "Réconfortant" },
+  "تحول جنسي سحري": { en: "Magical Sex Shift", fr: "Transformation magique" },
+  "جريمة منظمة": { en: "Organized Crime", fr: "Crime organisé" },
+  "ألعاب خطيرة": { en: "High Stakes Game", fr: "Jeux à haut risque" },
+  "تحقيق": { en: "Detective", fr: "Enquête" },
+  "دموي": { en: "Gore", fr: "Gore" },
+  "إيدول": { en: "Idol", fr: "Idole" },
+  "أساطير": { en: "Mythology", fr: "Mythologie" },
+  "سباق": { en: "Racing", fr: "Course" },
+  "لعبة استراتيجية": { en: "Strategy Game", fr: "Jeu de stratégie" },
+  "فنون بصرية": { en: "Visual Arts", fr: "Arts visuels" },
+  "سفر عبر الزمن": { en: "Time Travel", fr: "Voyage dans le temps" },
+  "نجاة": { en: "Survival", fr: "Survie" },
+  "ساموراي": { en: "Samurai", fr: "Samouraï" },
+  "مدرسي": { en: "School", fr: "Scolaire" },
+  "مكان عمل": { en: "Workplace", fr: "Lieu de travail" },
+  "فضاء": { en: "Space", fr: "Espace" },
+  "قوة خارقة": { en: "Super Power", fr: "Super-pouvoirs" },
+  "مصاصو دماء": { en: "Vampire", fr: "Vampires" },
+  "جوسي": { en: "Josei", fr: "Josei" },
+  "أطفال": { en: "Kids", fr: "Enfants" },
+  "مانجا": { en: "Manga", fr: "Manga" },
+  "شريحة": { en: "Slice of Life", fr: "Tranche de vie" },
+  "سحر": { en: "Magic", fr: "Magie" },
+  "ميكا": { en: "Mecha", fr: "Mecha" },
+  "إثارة": { en: "Thriller", fr: "Thriller" }
+};
+
+window.translateGenre = function(rawGenre) {
+  const lang = window.currentLang || "ar";
+  if (!rawGenre) return "";
+  const g = String(rawGenre).trim();
+  if (lang === "ar") return g;
+  const entry = window.GENRE_TRANSLATIONS[g];
+  if (entry && entry[lang]) return entry[lang];
+  return g;
 };
 
 window.translateCategoryLabel = function(rawCat, isAnimation) {
   const lang = window.currentLang || "ar";
+  const c = String(rawCat || "").trim();
   if (lang === "ar") {
-    return rawCat || (isAnimation ? "أنميشن" : "مسلسل");
+    if (c === "فلم" || c === "فيلم") return "فيلم";
+    if (c === "مسلسل") return "مسلسل";
+    if (c === "أنميشن") return "أنميشن";
+    if (c === "أنمي") return "أنمي";
+    return c || (isAnimation ? "أنميشن" : "مسلسل");
   }
-  const c = (rawCat || "").trim();
-  const mapEn = { "مسلسل": "Series", "فلم": "Movie", "فيلم": "Movie", "أنميشن": "Animation", "أنمي": "Anime", "أوفا": "OVA", "خاصة": "Special", "أونا": "ONA" };
-  const mapFr = { "مسلسل": "Série", "فلم": "Film", "فيلم": "Film", "أنميشن": "Animation", "أنمي": "Anime", "أوفا": "OVA", "خاصة": "Spécial", "أونا": "ONA" };
+  const mapEn = { "مسلسل": "Series", "فلم": "Movie", "فيلم": "Movie", "الفيلم": "Movie", "أنميشن": "Animation", "الأنميشن": "Animation", "أنمي": "Anime", "الأنمي": "Anime", "أوفا": "OVA", "خاصة": "Special", "أونا": "ONA", "all": "All" };
+  const mapFr = { "مسلسل": "Série", "فلم": "Film", "فيلم": "Film", "الفيلم": "Film", "أنميشن": "Animation", "الأنميشن": "Animation", "أنمي": "Anime", "الأنمي": "Anime", "أوفا": "OVA", "خاصة": "Spécial", "أونا": "ONA", "all": "Tout" };
   if (lang === "en") return mapEn[c] || c || (isAnimation ? "Animation" : "Series");
   if (lang === "fr") return mapFr[c] || c || (isAnimation ? "Animation" : "Série");
   return c;
+};
+
+window.translateVersion = function(rawVersion) {
+  const lang = window.currentLang || "ar";
+  const v = String(rawVersion || "").trim();
+  if (!v || v === "all") return t("version_all");
+  if (v.includes("مترجم") || v.toLowerCase() === "subbed" || v.toLowerCase() === "sub") {
+    return t("version_subbed");
+  }
+  if (v.includes("مدبلج") || v.toLowerCase() === "dubbed" || v.toLowerCase() === "dub") {
+    return t("version_dubbed");
+  }
+  return v;
+};
+
+window.translateStatus = function(rawStatus) {
+  const lang = window.currentLang || "ar";
+  const s = String(rawStatus || "").trim();
+  if (!s) return t("status_ongoing");
+  if (s.includes("مكتمل") || s.toLowerCase() === "completed") return t("status_completed");
+  if (s.includes("مستمر") || s.toLowerCase() === "ongoing") return t("status_ongoing");
+  if (s.includes("لم يصدر") || s.includes("قادم") || s.toLowerCase() === "upcoming") return t("status_upcoming");
+  return s;
+};
+
+window.translateYear = function(rawYear) {
+  const lang = window.currentLang || "ar";
+  const y = String(rawYear || "").trim();
+  if (!y || y === "all") return t("filter_all_years");
+  if (y === "before_2015") return t("filter_before_2015");
+  return y;
+};
+
+window.formatEpisodeCount = function(count) {
+  const n = Math.max(0, Number(count) || 0);
+  const lang = window.currentLang || "ar";
+  if (lang === "ar") {
+    if (n === 1) return "حلقة واحدة";
+    if (n === 2) return "حلقتان";
+    if (n >= 3 && n <= 10) return `${n} حلقات`;
+    return `${n} حلقة`;
+  }
+  if (lang === "en") {
+    return (n === 1) ? "1 episode" : `${n} episodes`;
+  }
+  if (lang === "fr") {
+    return (n <= 1) ? `${n} épisode` : `${n} épisodes`;
+  }
+  return `${n}`;
+};
+
+window.formatEpisodeCountAvailable = function(count) {
+  const n = Math.max(0, Number(count) || 0);
+  const lang = window.currentLang || "ar";
+  if (lang === "ar") {
+    if (n === 1) return "حلقة واحدة متوفرة";
+    if (n === 2) return "حلقتان متوفرتان";
+    if (n >= 3 && n <= 10) return `${n} حلقات متوفرة`;
+    return `${n} حلقة متوفرة`;
+  }
+  if (lang === "en") {
+    return (n === 1) ? "1 episode available" : `${n} episodes available`;
+  }
+  if (lang === "fr") {
+    return (n <= 1) ? `${n} épisode disponible` : `${n} épisodes disponibles`;
+  }
+  return `${n}`;
+};
+
+window.formatSelectedGenresCount = function(count) {
+  const n = Math.max(0, Number(count) || 0);
+  const lang = window.currentLang || "ar";
+  if (lang === "ar") return `${n} محدد`;
+  if (lang === "en") return `${n} selected`;
+  if (lang === "fr") return `${n} sélectionné${n > 1 ? 's' : ''}`;
+  return `${n}`;
 };
 
 // Translate only generic episode/type labels; preserve custom titles and original work names.
@@ -4541,7 +5105,7 @@ window.translateEpisodeTitle = function(rawTitle, episodeNumber) {
 
   // Translate generic "film/movie" labels only, not real movie titles.
   if (/^(فلم|فيلم|movie|film)$/i.test(raw)) {
-    return lang === "fr" ? "Film" : lang === "en" ? "Movie" : "فلم";
+    return lang === "fr" ? "Film" : lang === "en" ? "Movie" : "فيلم";
   }
 
   // Recognize generic episode labels in Arabic, English, and French.
@@ -4615,23 +5179,97 @@ window.applyLanguage = function(lang, rerender = true) {
   document.documentElement.lang = window.currentLang;
   document.documentElement.dir = dir;
 
-  // Update static elements (Navbar, Topbar, Auth, AdPopup)
+  // 1. Top Bar Buttons
+  const searchBtn = document.getElementById("topSearchBtn");
+  const filterBtn = document.getElementById("topFilterBtn");
+  const drawerBtn = document.getElementById("topDrawerBtn");
+  if (searchBtn) { searchBtn.title = t("search_title"); searchBtn.setAttribute("aria-label", t("search_title")); }
+  if (filterBtn) { filterBtn.title = t("filter_title"); filterBtn.setAttribute("aria-label", t("filter_title")); }
+  if (drawerBtn) { drawerBtn.title = t("drawer_title"); drawerBtn.setAttribute("aria-label", t("drawer_title")); }
+
+  // 2. Bottom Nav Bar
   const navHome = document.querySelector("#nav-home span");
   const navAnim = document.querySelector("#nav-animation span");
   const navAnime = document.querySelector("#nav-anime span");
   const navAdd = document.querySelector("#nav-add span");
+  const navReports = document.querySelector("#nav-reports span");
   const navFav = document.querySelector("#nav-favorites span");
   if (navHome) navHome.innerText = t("nav_home");
   if (navAnim) navAnim.innerText = t("nav_animation");
   if (navAnime) navAnime.innerText = t("nav_anime");
   if (navAdd) navAdd.innerText = t("nav_add");
+  if (navReports) navReports.innerText = t("nav_reports");
   if (navFav) navFav.innerText = t("nav_favorites");
 
-  const searchBtn = document.getElementById("topSearchBtn");
-  const drawerBtn = document.getElementById("topDrawerBtn");
-  if (searchBtn) { searchBtn.title = t("search_title"); searchBtn.setAttribute("aria-label", t("search_title")); }
-  if (drawerBtn) { drawerBtn.title = "القائمة الجانبية"; drawerBtn.setAttribute("aria-label", "القائمة الجانبية"); }
+  // 3. Side Drawer elements & labels
+  const sideDrawer = document.getElementById("sideDrawer");
+  if (sideDrawer) sideDrawer.setAttribute("aria-label", t("drawer_title"));
+  const drawerItems = {
+    home: t("nav_home"),
+    anime: t("nav_anime_list"),
+    animation: t("nav_animation_list"),
+    coming: t("nav_coming"),
+    favorites: t("nav_favorites"),
+    history: t("nav_history"),
+    settings: t("settings_title")
+  };
+  Object.keys(drawerItems).forEach(key => {
+    const el = document.querySelector(`.drawer-item[data-page="${key}"] .drawer-label`);
+    if (el) el.innerText = drawerItems[key];
+  });
+  if (typeof window.updateDrawerUserState === "function") {
+    window.updateDrawerUserState();
+  }
 
+  // 4. Content Filter Modal elements
+  const isAnimation = (window.activeFilterModalTarget === "animation" || currentPage === "animation");
+  const filterModalTitle = document.getElementById("filterModalTitle");
+  if (filterModalTitle) {
+    filterModalTitle.innerText = isAnimation ? t("filter_title_animation") : t("filter_title_anime");
+  }
+  const filterVersionAll = document.querySelector("#filterVersionChips [data-val='all']");
+  const filterVersionSub = document.querySelector("#filterVersionChips [data-val='مترجم']");
+  const filterVersionDub = document.querySelector("#filterVersionChips [data-val='مدبلج']");
+  if (filterVersionAll) filterVersionAll.innerText = t("filter_all");
+  if (filterVersionSub) filterVersionSub.innerText = t("version_subbed");
+  if (filterVersionDub) filterVersionDub.innerText = t("version_dubbed");
+
+  const filterCatAll = document.querySelector("#filterCategoryChips [data-val='all']");
+  const filterCatSeries = document.querySelector("#filterCategoryChips [data-val='مسلسل']");
+  const filterCatMovie = document.querySelector("#filterCategoryChips [data-val='فلم']");
+  const filterCatSpecial = document.querySelector("#filterCategoryChips [data-val='خاصة']");
+  if (filterCatAll) filterCatAll.innerText = t("filter_all");
+  if (filterCatSeries) filterCatSeries.innerText = t("cat_series");
+  if (filterCatMovie) filterCatMovie.innerText = t("cat_movie");
+  if (filterCatSpecial) filterCatSpecial.innerText = t("cat_special");
+
+  const filterYearAllOpt = document.querySelector("#filterYearSelect option[value='all']");
+  const filterYearBeforeOpt = document.querySelector("#filterYearSelect option[value='before_2015']");
+  if (filterYearAllOpt) filterYearAllOpt.innerText = t("filter_all_years");
+  if (filterYearBeforeOpt) filterYearBeforeOpt.innerText = t("filter_before_2015");
+
+  const yearDisplay = document.getElementById("selectedYearDisplay");
+  if (yearDisplay && window.modalTempFilterState) {
+    yearDisplay.innerText = window.translateYear(window.modalTempFilterState.year);
+  }
+
+  const genreSearchInput = document.getElementById("filterGenreSearchInput");
+  if (genreSearchInput) genreSearchInput.placeholder = t("filter_genre_search_placeholder");
+
+  const clearGenresBtn = document.querySelector("#contentFilterModal button[onclick*='clearFilterModalGenresOnly']");
+  if (clearGenresBtn) clearGenresBtn.innerText = t("filter_clear_selection");
+
+  const applyBtnSpan = document.querySelector("#contentFilterModal button[onclick*='applyContentFilters'] span");
+  if (applyBtnSpan) applyBtnSpan.innerText = t("filter_apply_btn");
+
+  const resetBtnSpan = document.querySelector("#contentFilterModal button[onclick*='resetContentFilters'] span");
+  if (resetBtnSpan) resetBtnSpan.innerText = t("filter_clear_all_btn");
+
+  if (typeof window.updateFilterModalGenresUI === "function") {
+    window.updateFilterModalGenresUI();
+  }
+
+  // 5. Auth Modal & Popups
   const authTitle = document.querySelector(".auth-title");
   const authSub = document.querySelector(".auth-subtitle");
   const authInput = document.getElementById("authCodeInput");
@@ -4650,8 +5288,9 @@ window.applyLanguage = function(lang, rerender = true) {
   if (adDesc) adDesc.innerText = t("ad_support_desc");
   if (adBtn) adBtn.innerText = t("ad_start_btn");
 
-  if (rerender && window.currentUserRole) {
-    renderCurrentPage();
+  // 6. Always re-render active page immediately when language changes
+  if (rerender && typeof window.renderCurrentPage === "function") {
+    window.renderCurrentPage();
   }
 };
 
@@ -5695,6 +6334,20 @@ window.openDrawer = function() {
     drawer.classList.add("open");
     backdrop.classList.add("active");
     window.isDrawerOpen = true;
+    drawer.setAttribute("aria-label", t("drawer_title"));
+    const drawerItems = {
+      home: t("nav_home"),
+      anime: t("nav_anime_list"),
+      animation: t("nav_animation_list"),
+      coming: t("nav_coming"),
+      favorites: t("nav_favorites"),
+      history: t("nav_history"),
+      settings: t("settings_title")
+    };
+    Object.keys(drawerItems).forEach(key => {
+      const el = document.querySelector(`.drawer-item[data-page="${key}"] .drawer-label`);
+      if (el) el.innerText = drawerItems[key];
+    });
     updateDrawerUserState();
   }
 };
@@ -5747,13 +6400,14 @@ window.updateDrawerUserState = function() {
   const badgeEl = document.getElementById("drawerUserRoleBadge");
   const accountLabelEl = document.getElementById("drawerAccountItemLabel");
   const notifIconEl = document.getElementById("drawerNotifIcon");
+  const notifBtnEl = document.querySelector(".drawer-notif-btn");
+  if (notifBtnEl) notifBtnEl.title = t("notifications_label");
 
   const user = window.currentAuthUser;
   if (user) {
-    const dName = user.displayName || user.email?.split("@")[0] || "مستخدم";
+    const dName = user.displayName || user.email?.split("@")[0] || t("role_viewer");
     const isAdmin = (window.currentUserRole === "ADMIN");
     const isAssistant = (window.currentUserRole === "ASSISTANT");
-
     if (nameEl) nameEl.textContent = dName;
     if (emailEl) {
       emailEl.textContent = user.email || "";
@@ -5762,13 +6416,13 @@ window.updateDrawerUserState = function() {
     if (badgeEl) {
       badgeEl.classList.remove("admin", "assistant");
       if (isAdmin) {
-        badgeEl.textContent = "👑 مدير النظام";
+        badgeEl.textContent = t("role_admin");
         badgeEl.classList.add("admin");
       } else if (isAssistant) {
-        badgeEl.textContent = "🛡️ مساعد";
+        badgeEl.textContent = t("role_assistant");
         badgeEl.classList.add("assistant");
       } else {
-        badgeEl.textContent = "👤 مشاهد";
+        badgeEl.textContent = t("role_viewer");
       }
     }
     if (avatarEl) {
@@ -5778,23 +6432,22 @@ window.updateDrawerUserState = function() {
         avatarEl.textContent = dName.charAt(0).toUpperCase();
       }
     }
-    if (accountLabelEl) accountLabelEl.textContent = "الحساب الشخصي";
+    if (accountLabelEl) accountLabelEl.textContent = t("nav_account");
   } else {
-    if (nameEl) nameEl.textContent = "زائر";
+    if (nameEl) nameEl.textContent = t("user_guest");
     if (emailEl) {
-      emailEl.textContent = "اضغط لتسجيل الدخول";
+      emailEl.textContent = t("user_click_login");
       emailEl.style.display = "block";
     }
     if (badgeEl) {
-      badgeEl.textContent = "مشاهد (غير مسجل)";
+      badgeEl.textContent = t("role_viewer_unregistered");
       badgeEl.classList.remove("admin");
     }
     if (avatarEl) avatarEl.textContent = "👤";
-    if (accountLabelEl) accountLabelEl.textContent = "تسجيل الدخول";
+    if (accountLabelEl) accountLabelEl.textContent = t("login_btn");
   }
-
   if (notifIconEl) {
-    const notifState = getEffectiveNotificationState();
+    const notifState = (typeof window.getNotificationsState === "function") ? window.getNotificationsState() : { effective: true };
     notifIconEl.textContent = notifState.effective ? "🔔" : "🔕";
   }
 };
@@ -6484,12 +7137,12 @@ window.renderAccountPage = function() {
       <div class="page-header"><button class="back-btn" onclick="goBack()">${t("back_btn")}</button></div>
       <div class="account-hero-card" style="padding:40px 20px">
         <div style="font-size:52px;margin-bottom:12px">👤</div>
-        <h2 style="font-size:22px;font-weight:900;margin-bottom:8px">أنت تتصفح كزائر</h2>
+        <h2 style="font-size:22px;font-weight:900;margin-bottom:8px">${t("account_guest_title")}</h2>
         <p style="font-size:13px;color:#888;margin-bottom:24px;line-height:1.6;max-width:320px;margin-left:auto;margin-right:auto">
-          سجل الدخول الآن للوصول إلى قائمتك الخاصة، مزامنة مفضلتك عبر أجهزتك، وحفظ سجل مشاهداتك.
+          ${t("account_guest_desc")}
         </p>
         <button class="auth-btn-primary" style="max-width:240px;margin:0 auto" onclick="openAuthModal('login')">
-          تسجيل الدخول / إنشاء حساب
+          ${t("account_login_register_btn")}
         </button>
       </div>
     `;
@@ -6515,21 +7168,21 @@ window.renderAccountPage = function() {
       <p style="font-size:12px;color:#9ca3af;margin:4px 0 8px 0;direction:ltr">${window.escapeDescHtml(user.email || "")}</p>
       <div>
         <span class="drawer-role-badge ${isAdmin ? 'admin' : (isAssistant ? 'assistant' : '')}" style="font-size:11px;padding:3px 10px">
-          ${isAdmin ? '👑 مدير النظام (Admin)' : (isAssistant ? '🛡️ مساعد (Assistant)' : '👤 مشاهد (Viewer)')}
+          ${isAdmin ? t("role_admin") : (isAssistant ? t("role_assistant") : t("role_viewer"))}
         </span>
       </div>
-      <p style="font-size:11px;color:#6b7280;margin-top:12px">📅 انضم في: ${creationDate}</p>
+      <p style="font-size:11px;color:#6b7280;margin-top:12px">📅 ${t("joined_on")} ${creationDate}</p>
     </div>
 
     <!-- Quick Stats -->
     <div class="account-stats-row" style="grid-template-columns: repeat(2, 1fr)">
       <div class="account-stat-card" onclick="showPage('favorites')" style="cursor:pointer">
         <div class="account-stat-val" style="color:#ef4444">${favCount}</div>
-        <div class="account-stat-lbl">♥ المفضلة</div>
+        <div class="account-stat-lbl">♥ ${t("nav_favorites")}</div>
       </div>
       <div class="account-stat-card" onclick="showPage('history')" style="cursor:pointer">
         <div class="account-stat-val" style="color:#facc15">${historyCount}</div>
-        <div class="account-stat-lbl">🕒 المشاهدات</div>
+        <div class="account-stat-lbl">🕒 ${t("history_stat")}</div>
       </div>
     </div>
 
@@ -6539,7 +7192,7 @@ window.renderAccountPage = function() {
         <div class="account-action-left">
           <span style="font-size:20px">✏️</span>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#fff">تعديل الاسم المستعار</div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${t("edit_display_name")}</div>
             <div style="font-size:11.5px;color:#888">${window.escapeDescHtml(dName)}</div>
           </div>
         </div>
@@ -6550,7 +7203,7 @@ window.renderAccountPage = function() {
         <div class="account-action-left">
           <span style="font-size:20px">🖼️</span>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#fff">تعديل الصورة الشخصية</div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${t("edit_photo_url")}</div>
             <div style="font-size:11.5px;color:#888">إدخال رابط صورة جديدة</div>
           </div>
         </div>
@@ -6561,7 +7214,7 @@ window.renderAccountPage = function() {
         <div class="account-action-left">
           <span style="font-size:20px">🔑</span>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#fff">إعادة تعيين كلمة المرور</div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${t("reset_password")}</div>
             <div style="font-size:11.5px;color:#888">إرسال رابط التعيين إلى بريدك الإلكتروني</div>
           </div>
         </div>
@@ -6572,8 +7225,8 @@ window.renderAccountPage = function() {
         <div class="account-action-left">
           <span style="font-size:20px">🚪</span>
           <div>
-            <div style="font-size:14px;font-weight:700">تسجيل الخروج</div>
-            <div style="font-size:11.5px;opacity:0.8">الخروج من الحساب الحالي</div>
+            <div style="font-size:14px;font-weight:700">${t("logout_btn")}</div>
+            <div style="font-size:11.5px;opacity:0.8">${t("logout_sub")}</div>
           </div>
         </div>
         <span>←</span>
@@ -6791,9 +7444,9 @@ window.renderComingSoonPage = function() {
     <div class="section-banner">
       <span style="font-size:32px">⏳</span>
       <div>
-        <h1 style="font-size:22px;font-weight:900">قادم قريبًا</h1>
-        <p style="font-size:12px;color:#888;margin-top:2px">جميع أعمال الأنمي والأنميشن التي لم تصدر بعد</p>
-        <p style="font-size:12px;color:#888;margin-top:4px">${comingItems.length} عمل قادم</p>
+        <h1 style="font-size:22px;font-weight:900">${t("nav_coming")}</h1>
+        <p style="font-size:12px;color:#888;margin-top:2px">${t("coming_soon_sub")}</p>
+        <p style="font-size:12px;color:#888;margin-top:4px">${comingItems.length} ${t("coming_soon_counter")}</p>
       </div>
     </div>
 
@@ -6804,8 +7457,8 @@ window.renderComingSoonPage = function() {
     ` : `
       <div class="coming-soon-empty" style="padding:48px 20px;text-align:center">
         <div style="font-size:44px;margin-bottom:12px">📅</div>
-        <h3 style="font-size:16px;font-weight:800;margin:0 0 8px">لا توجد أعمال قادمة حاليًا</h3>
-        <p style="font-size:13px;color:#888;margin:0">ستظهر هنا أعمال الأنمي والأنميشن التي لم تصدر بعد.</p>
+        <h3 style="font-size:16px;font-weight:800;margin:0 0 8px">${t("coming_soon_empty_title")}</h3>
+        <p style="font-size:13px;color:#888;margin:0">${t("coming_soon_empty_desc")}</p>
       </div>
     `}
   `;
@@ -6818,15 +7471,15 @@ window.renderMyListPage = function() {
   main.innerHTML = `
     <div class="page-header"><button class="back-btn" onclick="goBack()">${t("back_btn")}</button></div>
     <div class="hero" style="height:100px;margin-top:0">
-      <h1 style="font-size:26px">📑 قائمتي الخاصة</h1>
+      <h1 style="font-size:26px">📑 ${t("mylist_title")}</h1>
     </div>
     
     ${listItems.length === 0 ? `
       <div style="padding:60px 20px;text-align:center;color:#777">
         <div style="font-size:42px;margin-bottom:12px">📑</div>
-        <p style="font-size:15px;font-weight:700;color:#aaa">قائمتك فارغة حالياً</p>
-        <p style="font-size:12px;margin-top:6px">يمكنك إضافة الأعمال إلى قائمتك بالنقر على زر حفظ في صفحة التفاصيل.</p>
-        <button class="back-btn" style="margin:20px auto 0 auto;display:inline-block" onclick="showPage('anime')">استكشف الأنمي</button>
+        <p style="font-size:15px;font-weight:700;color:#aaa">${t("mylist_empty_title")}</p>
+        <p style="font-size:12px;margin-top:6px">${t("mylist_empty_desc")}</p>
+        <button class="back-btn" style="margin:20px auto 0 auto;display:inline-block" onclick="showPage('anime')">${t("explore_anime_btn")}</button>
       </div>
     ` : `
       <div class="movies-grid">
@@ -6843,14 +7496,14 @@ window.renderHistoryPage = function() {
   main.innerHTML = `
     <div class="page-header"><button class="back-btn" onclick="goBack()">${t("back_btn")}</button></div>
     <div class="hero" style="height:100px;margin-top:0">
-      <h1 style="font-size:26px">🕒 آخر المشاهدات</h1>
+      <h1 style="font-size:26px">🕒 ${t("history_title")}</h1>
     </div>
 
     ${history.length === 0 ? `
       <div style="padding:60px 20px;text-align:center;color:#777">
         <div style="font-size:42px;margin-bottom:12px">🕒</div>
-        <p style="font-size:15px;font-weight:700;color:#aaa">لم تشاهد أي حلقات بعد</p>
-        <p style="font-size:12px;margin-top:6px">الحلقات والأفلام التي تشاهدها ستظهر هنا لاستئناف المتابعة بسهولة.</p>
+        <p style="font-size:15px;font-weight:700;color:#aaa">${t("history_empty_title")}</p>
+        <p style="font-size:12px;margin-top:6px">${t("history_empty_desc")}</p>
         <button class="back-btn" style="margin:20px auto 0 auto;display:inline-block" onclick="showPage('home')">الرئيسية</button>
       </div>
     ` : `
@@ -8213,7 +8866,8 @@ window._activeRatingFid = null;
 window._currentRatingSelectedScore = 10;
 
 window.getRatingScoreDesc = function(score) {
-  const map = {
+  const lang = window.currentLang || "ar";
+  const descAr = {
     1: '1 / 10 • كارثي 💔',
     2: '2 / 10 • سيء جداً 😞',
     3: '3 / 10 • سيء 😕',
@@ -8222,9 +8876,34 @@ window.getRatingScoreDesc = function(score) {
     6: '6 / 10 • مقبول 🙂',
     7: '7 / 10 • جيد 👍',
     8: '8 / 10 • جيد جداً 😊',
-    9: '9 / 10 • ممتاز ورائع 🤩',
-    10: '10 / 10 • أسطوري وخارق 🔥'
+    9: '9 / 10 • ممتاز 🌟',
+    10: '10 / 10 • أسطوري 🔥'
   };
+  const descEn = {
+    1: '1 / 10 • Catastrophic 💔',
+    2: '2 / 10 • Very Bad 😞',
+    3: '3 / 10 • Bad 😕',
+    4: '4 / 10 • Below Average 😐',
+    5: '5 / 10 • Average 😐',
+    6: '6 / 10 • Decent 🙂',
+    7: '7 / 10 • Good 👍',
+    8: '8 / 10 • Great 😊',
+    9: '9 / 10 • Excellent 🌟',
+    10: '10 / 10 • Masterpiece 🔥'
+  };
+  const descFr = {
+    1: '1 / 10 • Catastrophique 💔',
+    2: '2 / 10 • Très mauvais 😞',
+    3: '3 / 10 • Mauvais 😕',
+    4: '4 / 10 • Médiocre 😐',
+    5: '5 / 10 • Moyen 😐',
+    6: '6 / 10 • Acceptable 🙂',
+    7: '7 / 10 • Bon 👍',
+    8: '8 / 10 • Très bon 😊',
+    9: '9 / 10 • Excellent 🌟',
+    10: '10 / 10 • Chef-d\'œuvre 🔥'
+  };
+  const map = (lang === "fr") ? descFr : (lang === "en" ? descEn : descAr);
   return map[score] || `${score} / 10`;
 };
 
@@ -8280,10 +8959,10 @@ window.openRatingModal = async function(fid) {
 
   if (errorWrap) errorWrap.style.display = "none";
   if (submitBtn) submitBtn.disabled = false;
-  if (submitText) submitText.textContent = "حفظ التقييم ⭐";
+  if (submitText) submitText.textContent = `${t("rating_submit_btn")} ⭐`;
 
-  if (titleEl) titleEl.textContent = `تقييم «${item.title || "العمل"}»`;
-  if (subEl) subEl.textContent = "اختر تقييمك من 1 إلى 10 وشاركه مع جميع المتابعين";
+  if (titleEl) titleEl.textContent = `${t("rating_modal_title")} «${item.title || ""}»`;
+  if (subEl) subEl.textContent = t("rating_modal_sub");
 
   let avgRating = Number(item.ratingAverage) || 0;
   let countRating = Number(item.ratingCount) || 0;
@@ -9230,15 +9909,15 @@ window.renderSearchPage = function() {
     </div>
     <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
       <div style="position:relative;display:flex;align-items:center">
-        <input id="searchInput" class="input" style="padding-left:36px;margin:0" placeholder="ابحث باسم العمل أو أي اسم بديل (عربي، إنجليزي...)" oninput="window.performSearch()" autofocus>
+        <input id="searchInput" class="input" style="padding-left:36px;margin:0" placeholder="${t("search_input_placeholder")}" oninput="window.performSearch()" autofocus>
         <button type="button" onclick="document.getElementById('searchInput').value='';window.performSearch();" style="position:absolute;left:10px;background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:4px">✕</button>
       </div>
       <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
-        <button type="button" class="search-filter-chip" data-filter="all" onclick="window.setSearchFilter('all')" style="background:${currFilter==='all'?'#e50914':'#181818'};color:${currFilter==='all'?'#fff':'#aaa'};border:1px solid ${currFilter==='all'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">الكل</button>
-        <button type="button" class="search-filter-chip" data-filter="anime" onclick="window.setSearchFilter('anime')" style="background:${currFilter==='anime'?'#e50914':'#181818'};color:${currFilter==='anime'?'#fff':'#aaa'};border:1px solid ${currFilter==='anime'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">⚡ الأنمي</button>
-        <button type="button" class="search-filter-chip" data-filter="animation" onclick="window.setSearchFilter('animation')" style="background:${currFilter==='animation'?'#e50914':'#181818'};color:${currFilter==='animation'?'#fff':'#aaa'};border:1px solid ${currFilter==='animation'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">🎬 الأنميشن</button>
-        <button type="button" class="search-filter-chip" data-filter="series" onclick="window.setSearchFilter('series')" style="background:${currFilter==='series'?'#e50914':'#181818'};color:${currFilter==='series'?'#fff':'#aaa'};border:1px solid ${currFilter==='series'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">📺 مسلسلات</button>
-        <button type="button" class="search-filter-chip" data-filter="movie" onclick="window.setSearchFilter('movie')" style="background:${currFilter==='movie'?'#e50914':'#181818'};color:${currFilter==='movie'?'#fff':'#aaa'};border:1px solid ${currFilter==='movie'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">🍿 أفلام</button>
+        <button type="button" class="search-filter-chip" data-filter="all" onclick="window.setSearchFilter('all')" style="background:${currFilter==='all'?'#e50914':'#181818'};color:${currFilter==='all'?'#fff':'#aaa'};border:1px solid ${currFilter==='all'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">${t("cat_all")}</button>
+        <button type="button" class="search-filter-chip" data-filter="anime" onclick="window.setSearchFilter('anime')" style="background:${currFilter==='anime'?'#e50914':'#181818'};color:${currFilter==='anime'?'#fff':'#aaa'};border:1px solid ${currFilter==='anime'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">⚡ ${t("cat_anime")}</button>
+        <button type="button" class="search-filter-chip" data-filter="animation" onclick="window.setSearchFilter('animation')" style="background:${currFilter==='animation'?'#e50914':'#181818'};color:${currFilter==='animation'?'#fff':'#aaa'};border:1px solid ${currFilter==='animation'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">🎬 ${t("cat_animation")}</button>
+        <button type="button" class="search-filter-chip" data-filter="series" onclick="window.setSearchFilter('series')" style="background:${currFilter==='series'?'#e50914':'#181818'};color:${currFilter==='series'?'#fff':'#aaa'};border:1px solid ${currFilter==='series'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">📺 ${t("cat_series")}</button>
+        <button type="button" class="search-filter-chip" data-filter="movie" onclick="window.setSearchFilter('movie')" style="background:${currFilter==='movie'?'#e50914':'#181818'};color:${currFilter==='movie'?'#fff':'#aaa'};border:1px solid ${currFilter==='movie'?'#e50914':'#2c2c2c'};padding:6px 14px;border-radius:18px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap">🍿 ${t("cat_movie")}</button>
       </div>
     </div>
     <div id="searchResults" class="movies-grid"></div>
@@ -9296,8 +9975,8 @@ window.performSearch=()=>{
       container.innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:#777">
           <div style="font-size:36px;margin-bottom:10px">🔍</div>
-          <div style="font-size:15px;color:#aaa;font-weight:bold">لم يتم العثور على نتائج لـ "${window.escapeDescHtml(rawQ)}"</div>
-          <div style="font-size:12px;color:#666;margin-top:6px">جرب البحث بكلمة أخرى أو اسم بديل آخر (عربي أو إنجليزي أو ياباني)</div>
+          <div style="font-size:15px;color:#aaa;font-weight:bold">${t("search_no_results")} ("${window.escapeDescHtml(rawQ)}")</div>
+          <div style="font-size:12px;color:#666;margin-top:6px">${t("try_relaxing_filters")} (عربي أو إنجليزي أو ياباني)</div>
         </div>
       `;
     } else {
@@ -9923,7 +10602,7 @@ window.openReportProblemModal = function(fid, episodeIdx = -1, presetIssueType =
   }
   if (submitBtn) {
     submitBtn.disabled = false;
-    submitBtn.innerText = "📨 إرسال البلاغ";
+    submitBtn.innerText = "📨 " + t("submit_report_btn");
   }
 
   window.onReportIssueTypeChanged(issueSelect ? issueSelect.value : "");
@@ -10111,7 +10790,7 @@ window.submitUserReport = async function() {
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.innerText = "📨 إرسال البلاغ";
+      submitBtn.innerText = "📨 " + t("submit_report_btn");
     }
   }
 };
